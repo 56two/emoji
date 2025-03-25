@@ -69,10 +69,10 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         let currentStyle = 'emojis';
-        const styles = ['emojis', 'shapes',  'animals', 'foods', 'sports'];
+        const styles = ['emojis', 'shapes', 'symbols', 'animals', 'foods', 'sports'];
         const styleNames = {
             'emojis': '表情',
-            'shapes': '图形',
+            'symbols': '符号',
             'animals': '动物',
             'foods': '食物',
             'sports': '运动'
@@ -118,10 +118,11 @@
                         const sports = ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸'];
                         this.content = sports[Math.floor(Math.random() * sports.length)];
                         break;
-                    case 'shapes':
-                        this.shape = Math.floor(Math.random() * 4);
+                    case 'symbols':
+                        const symbols = ['♥', '♦', '♠', '♣', '★', '☀', '☁', '☂', '☃', '☄'];
+                        this.content = symbols[Math.floor(Math.random() * symbols.length)];
+                        this.color = `hsl(${Math.random() * 360}, 70%, 50%)`; // 为符号添加随机颜色
                         break;
-                
                 }
             }
 
@@ -136,11 +137,17 @@
             drawContent() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle =  'white';
+                ctx.fillStyle = currentStyle === 'symbols' ? 'transparent' : 'white';
                 ctx.fill();
                 
                 // 根据不同样式调整字体大小
-                const fontSize = this.radius * 1.5;
+                let fontSize;
+                if (currentStyle === 'symbols') {
+                    fontSize = this.radius * 2;
+                } else {
+                    fontSize = this.radius * 1.5;
+                }
+                
                 ctx.font = `${fontSize}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -153,46 +160,6 @@
                 ctx.closePath();
             }
 
-            drawShape() {
-                ctx.beginPath();
-                ctx.fillStyle = this.color;
-                
-                switch(this.shape) {
-                    case 0: // 圆形
-                        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                        break;
-                    case 1: // 正方形
-                        ctx.rect(this.x - this.radius, this.y - this.radius, 
-                                this.radius * 2, this.radius * 2);
-                        break;
-                    case 2: // 三角形
-                        ctx.moveTo(this.x, this.y - this.radius);
-                        ctx.lineTo(this.x + this.radius, this.y + this.radius);
-                        ctx.lineTo(this.x - this.radius, this.y + this.radius);
-                        break;
-                    case 3: // 星形
-                        this.drawStar();
-                        break;
-                }
-                ctx.fill();
-                ctx.closePath();
-            }
-
-            drawStar() {
-                const spikes = 5;
-                const outerRadius = this.radius;
-                const innerRadius = this.radius / 2;
-
-                for(let i = 0; i < spikes * 2; i++) {
-                    const radius = i % 2 === 0 ? outerRadius : innerRadius;
-                    const angle = (i * Math.PI) / spikes;
-                    const x = this.x + Math.cos(angle) * radius;
-                    const y = this.y + Math.sin(angle) * radius;
-                    
-                    if(i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-            }
 
             update() {
                 this.dy += this.gravity;
