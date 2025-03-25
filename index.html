@@ -40,37 +40,155 @@
             height: 85vh;
             touch-action: none; /* 防止移动设备上的默认触摸行为 */
         }
+
+        #styleToggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        #styleToggle:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
-    <div id="instructions">单击鼠标召唤emoji</div>
+    <div id="instructions">单击鼠标召唤图形</div>
+    <button id="styleToggle">切换样式</button>
     <canvas id="gameCanvas"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        let currentStyle = 'emojis';
+        const styles = ['emojis', 'shapes', 'symbols', 'animals', 'foods', 'sports'];
+        const styleNames = {
+            'emojis': '表情',
+            'shapes': '图形',
+            'symbols': '符号',
+            'animals': '动物',
+            'foods': '食物',
+            'sports': '运动'
+        };
+
+        document.getElementById('styleToggle').addEventListener('click', () => {
+            const currentIndex = styles.indexOf(currentStyle);
+            currentStyle = styles[(currentIndex + 1) % styles.length];
+            document.getElementById('styleToggle').textContent = 
+                `切换到${styleNames[styles[(currentIndex + 2) % styles.length]]}`;
+        });
+
+        // 初始化按钮文本
+        document.getElementById('styleToggle').textContent = `切换到${styleNames[styles[1]]}`;
 
         class Emoji {
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.radius = Math.random() * 20 + 10; // Random radius between 10 and 30
-                this.dx = (Math.random() - 0.5) * 4; // Horizontal velocity
-                this.dy = -Math.random() * 4; // Vertical velocity
-                this.gravity = 0.2; // Gravity effect
-                this.bounceFactor = -0.7; // Bounce factor after collision
-                this.emojiChar = String.fromCodePoint(0x1F600 + Math.floor(Math.random() * 90)); // Random emoji character
+                this.radius = Math.random() * 20 + 10;
+                this.dx = (Math.random() - 0.5) * 4;
+                this.dy = -Math.random() * 4;
+                this.gravity = 0.2;
+                this.bounceFactor = -0.7;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                this.setRandomContent();
+            }
+
+            setRandomContent() {
+                switch(currentStyle) {
+                    case 'emojis':
+                        this.content = String.fromCodePoint(0x1F600 + Math.floor(Math.random() * 90));
+                        break;
+                    case 'animals':
+                        const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯'];
+                        this.content = animals[Math.floor(Math.random() * animals.length)];
+                        break;
+                    case 'foods':
+                        const foods = ['🍎', '🍕', '🍔', '🍟', '🌭', '🍿', '🍩', '🍪', '🍫', '🍦'];
+                        this.content = foods[Math.floor(Math.random() * foods.length)];
+                        break;
+                    case 'sports':
+                        const sports = ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸'];
+                        this.content = sports[Math.floor(Math.random() * sports.length)];
+                        break;
+                    case 'shapes':
+                        this.shape = Math.floor(Math.random() * 4);
+                        break;
+                    case 'symbols':
+                        const symbols = ['♥', '♦', '♠', '♣', '★', '☀', '☁', '☂', '☃', '☄'];
+                        this.content = symbols[Math.floor(Math.random() * symbols.length)];
+                        break;
+                }
             }
 
             draw() {
+                if (currentStyle === 'shapes') {
+                    this.drawShape();
+                } else {
+                    this.drawContent();
+                }
+            }
+
+            drawContent() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 ctx.fillStyle = 'white';
                 ctx.fill();
-                ctx.font = `${this.radius}px serif`;
+                ctx.font = `${this.radius * 1.5}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText(this.emojiChar, this.x, this.y + this.radius / 3);
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = currentStyle === 'symbols' ? this.color : 'black';
+                ctx.fillText(this.content, this.x, this.y);
                 ctx.closePath();
+            }
+
+            drawShape() {
+                ctx.beginPath();
+                ctx.fillStyle = this.color;
+                
+                switch(this.shape) {
+                    case 0: // 圆形
+                        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                        break;
+                    case 1: // 正方形
+                        ctx.rect(this.x - this.radius, this.y - this.radius, 
+                                this.radius * 2, this.radius * 2);
+                        break;
+                    case 2: // 三角形
+                        ctx.moveTo(this.x, this.y - this.radius);
+                        ctx.lineTo(this.x + this.radius, this.y + this.radius);
+                        ctx.lineTo(this.x - this.radius, this.y + this.radius);
+                        break;
+                    case 3: // 星形
+                        this.drawStar();
+                        break;
+                }
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            drawStar() {
+                const spikes = 5;
+                const outerRadius = this.radius;
+                const innerRadius = this.radius / 2;
+
+                for(let i = 0; i < spikes * 2; i++) {
+                    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                    const angle = (i * Math.PI) / spikes;
+                    const x = this.x + Math.cos(angle) * radius;
+                    const y = this.y + Math.sin(angle) * radius;
+                    
+                    if(i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
             }
 
             update() {
@@ -203,7 +321,7 @@
         }
 
         window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('orientationchange', resizeCanvas); // 监听设备方向变化
+        window.addEventListener('orientationchange', resizeCanvas);
         initEventListeners();
         resizeCanvas();
         animate();
