@@ -125,6 +125,7 @@
                     case 'symbols':
                         const symbols = ['♥', '♦', '♠', '♣', '★', '☀', '☁', '☂', '☃', '☄'];
                         this.content = symbols[Math.floor(Math.random() * symbols.length)];
+                        this.color = `hsl(${Math.random() * 360}, 70%, 50%)`; // 为符号添加随机颜色
                         break;
                 }
             }
@@ -140,13 +141,26 @@
             drawContent() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = 'white';
+                ctx.fillStyle = currentStyle === 'symbols' ? 'transparent' : 'white';
                 ctx.fill();
-                ctx.font = `${this.radius * 1.5}px Arial`;
+                
+                // 根据不同样式调整字体大小
+                let fontSize;
+                if (currentStyle === 'symbols') {
+                    fontSize = this.radius * 2;
+                } else {
+                    fontSize = this.radius * 1.5;
+                }
+                
+                ctx.font = `${fontSize}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = currentStyle === 'symbols' ? this.color : 'black';
-                ctx.fillText(this.content, this.x, this.y);
+                
+                // 确保 content 存在
+                if (this.content) {
+                    ctx.fillText(this.content, this.x, this.y);
+                }
                 ctx.closePath();
             }
 
