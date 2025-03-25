@@ -9,9 +9,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #ffffff;
             font-family: Arial, sans-serif;
+            overflow: hidden;  /* 防止出现滚动条 */
         }
         #instructions {
             position: absolute;
@@ -23,12 +24,14 @@
         canvas {
             border: 1px solid #000000;
             background-color: #e0e0e0;
+            max-width: 95vw;  /* 视口宽度的95% */
+            max-height: 85vh; /* 视口高度的85% */
         }
     </style>
 </head>
 <body>
     <div id="instructions">单击鼠标召唤emoji</div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -126,6 +129,21 @@
             }
         }
 
+        function resizeCanvas() {
+            canvas.width = window.innerWidth * 0.95;  // 留一些边距
+            canvas.height = window.innerHeight * 0.85;
+            
+            // 确保所有emoji都在新的画布范围内
+            emojis.forEach(emoji => {
+                if (emoji.x + emoji.radius > canvas.width) {
+                    emoji.x = canvas.width - emoji.radius;
+                }
+                if (emoji.y + emoji.radius > canvas.height) {
+                    emoji.y = canvas.height - emoji.radius;
+                }
+            });
+        }
+
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -137,6 +155,8 @@
             requestAnimationFrame(animate);
         }
 
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
         canvas.addEventListener('click', spawnEmojis);
         animate();
     </script>
