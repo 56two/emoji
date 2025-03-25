@@ -2,30 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
             margin: 0;
+            padding: 0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             background-color: #ffffff;
             font-family: Arial, sans-serif;
-            overflow: hidden;  /* 防止出现滚动条 */
+            overflow: hidden;
+            touch-action: none; /* 防止移动设备上的默认触摸行为 */
         }
+        
         #instructions {
             position: absolute;
-            top: 20px;
+            top: 10px;
             color: #000000;
-            font-size: 20px;
+            font-size: 16px;
             z-index: 10;
+            text-align: center;
+            padding: 5px;
+            /* 适应不同设备尺寸 */
+            @media (max-width: 768px) {
+                font-size: 14px;
+                top: 5px;
+            }
         }
+        
         canvas {
             border: 1px solid #000000;
             background-color: #e0e0e0;
-            max-width: 95vw;  /* 视口宽度的95% */
-            max-height: 85vh; /* 视口高度的85% */
+            width: 95vw;
+            height: 85vh;
+            touch-action: none; /* 防止移动设备上的默认触摸行为 */
         }
     </style>
 </head>
@@ -118,20 +131,54 @@
 
         let emojis = [];
 
-        function spawnEmojis(event) {
+        function handleTouch(event) {
+            event.preventDefault(); // 阻止默认滚动行为
             const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            const count = Math.floor(Math.random() * 5) + 1;
+            const touch = event.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            spawnEmoji(x, y);
+        }
 
+        // 修改现有的 spawnEmojis 函数，使其更通用
+        function spawnEmoji(x, y) {
+            const count = Math.floor(Math.random() * 3) + 1; // 在移动设备上生成更少的emoji
+            
             for (let i = 0; i < count; i++) {
                 emojis.push(new Emoji(x, y));
             }
         }
 
+        // 添加触摸事件监听器
+        function initEventListeners() {
+            // 保持现有的点击事件
+            canvas.addEventListener('click', (event) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                spawnEmoji(x, y);
+            });
+            
+            // 添加触摸事件
+            canvas.addEventListener('touchstart', handleTouch, { passive: false });
+        }
+
         function resizeCanvas() {
-            canvas.width = window.innerWidth * 0.95;  // 留一些边距
-            canvas.height = window.innerHeight * 0.85;
+            // 获取设备方向
+            const isPortrait = window.innerHeight > window.innerWidth;
+            
+            // 根据设备方向调整画布大小
+            if (isPortrait) {
+                canvas.width = window.innerWidth * 0.95;
+                canvas.height = window.innerHeight * 0.80; // 在竖屏模式下稍微减小高度
+            } else {
+                canvas.width = window.innerWidth * 0.90;
+                canvas.height = window.innerHeight * 0.85;
+            }
+            
+            // 调整 emoji 大小
+            const scaleFactor = Math.min(canvas.width, canvas.height) / 800; // 基准尺寸
+            Emoji.prototype.baseRadius = 15 * scaleFactor; // 更新基础大小
             
             // 确保所有emoji都在新的画布范围内
             emojis.forEach(emoji => {
@@ -156,8 +203,9 @@
         }
 
         window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', resizeCanvas); // 监听设备方向变化
+        initEventListeners();
         resizeCanvas();
-        canvas.addEventListener('click', spawnEmojis);
         animate();
     </script>
 </body>
